@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>זירת הזיהוי - תמונות ושאלות מילוליות</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --accent-p1: #ef4444;
+            --accent-p2: #3b82f6;
+            --completed-bg: #1e293b;
+            --completed-text: #475569;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* לוח תוצאות וטיימרים */
+        .scoreboard {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px 40px;
+            background-color: rgba(0,0,0,0.3);
+            border-bottom: 2px solid #334155;
+            display: none;
+        }
+
+        .player-box {
+            text-align: center;
+            padding: 10px 25px;
+            border-radius: 12px;
+            background: #1e293b;
+            min-width: 150px;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+        }
+
+        .player-box.active-p1 { border-color: var(--accent-p1); box-shadow: 0 0 15px var(--accent-p1); }
+        .player-box.active-p2 { border-color: var(--accent-p2); box-shadow: 0 0 15px var(--accent-p2); }
+
+        .player-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; }
+        .timer { font-size: 2.5rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+
+        /* אזור התוכן המרכזי השליט */
+        .main-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* מסך כניסה ראשי */
+        .welcome-landing-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+        }
+
+        .welcome-landing-image {
+            max-width: 80%;
+            max-height: 55vh;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            object-fit: contain;
+            margin-bottom: 20px;
+        }
+
+        /* מסך בחירת קטגוריות - נקי */
+        .categories-grid {
+            display: none; 
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+            width: 80%;
+            max-width: 850px;
+            padding: 20px;
+            z-index: 4;
+        }
+
+        .category-card {
+            background-color: var(--card-bg);
+            border: 2px solid #334155;
+            border-radius: 16px;
+            padding: 40px 20px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .category-card:hover:not(.completed) {
+            transform: translateY(-5px);
+            border-color: #38bdf8;
+            box-shadow: 0 10px 20px rgba(56, 189, 248, 0.2);
+        }
+
+        .category-card.completed {
+            background-color: var(--completed-bg);
+            border-color: #1e293b;
+            color: var(--completed-text);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            text-decoration: line-through;
+            opacity: 0.5;
+        }
+
+        .category-card .status-tag {
+            display: block;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            color: #38bdf8;
+        }
+
+        /* אזור זירת המשחק */
+        .game-arena {
+            display: none; 
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
+        }
+
+        .image-container {
+            max-width: 80%;
+            max-height: 50vh;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .game-image {
+            max-width: 100%;
+            max-height: 50vh;
+            object-fit: contain;
+            display: none;
+        }
+
+        /* תיבת טקסט ייעודית עבור שאלות מילוליות */
+        .text-question-box {
+            background: #1e293b;
+            border: 3px solid #475569;
+            border-radius: 16px;
+            padding: 40px 30px;
+            max-width: 80%;
+            min-width: 50%;
+            text-align: center;
+            font-size: 2.2rem;
+            font-weight: bold;
+            line-height: 1.4;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            color: #f1f5f9;
+            display: none;
+        }
+
+        /* אלמנט ייעודי לספירה לאחור דרמטית */
+        .countdown-overlay {
+            font-size: 6rem;
+            font-weight: 900;
+            color: #f59e0b;
+            text-shadow: 0 4px 20px rgba(245, 158, 11, 0.5);
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .info-zone {
+            margin-top: 25px;
+            text-align: center;
+            min-height: 80px;
+        }
+
+        .status-text {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #e2e8f0;
+            margin-bottom: 10px;
+        }
+
+        .answer-text {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+            padding: 5px 30px;
+            border-radius: 30px;
+            border: 2px solid #10b981;
+            visibility: hidden;
+        }
+
+        /* מסך סיום */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            display: none;
+        }
+
+        .overlay h1 { font-size: 4rem; color: #f59e0b; margin-bottom: 20px; }
+        .restart-btn {
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scoreboard" id="scoreboard">
+        <div class="player-box" id="p1-box">
+            <div class="player-title" style="color: var(--accent-p1)">מתמודד 1</div>
+            <div class="timer" id="p1-timer">20</div>
+        </div>
+        <div class="player-box" id="p2-box">
+            <div class="player-title" style="color: var(--accent-p2)">מתמודד 2</div>
+            <div class="timer" id="p2-timer">20</div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        
+        <div class="welcome-landing-screen" id="welcome-landing-screen">
+            <img src="" id="landing-img-element" class="welcome-landing-image" alt="זירת המשחק">
+            <div class="status-text">ברוכים הבאים לזירה!</div>
+        </div>
+
+        <div class="categories-grid" id="categories-grid"></div>
+
+        <div class="game-arena" id="arena">
+            <div id="countdown-display" class="countdown-overlay">3</div>
+            
+            <div class="image-container" id="image-container">
+                <img src="" id="game-img" class="game-image" alt="משחק">
+            </div>
+
+            <div id="text-question-box" class="text-question-box">שאלת טקסט לדוגמה?</div>
+
+            <div class="info-zone">
+                <div id="status-display" class="status-text">טוען...</div>
+                <div id="answer-display" class="answer-text">התשובה הנכונה</div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="overlay" id="end-screen">
+        <h1 id="winner-text">המשחק נגמר!</h1>
+        <button class="restart-btn" onclick="resetGame()">שחק שוב מהתחלה</button>
+    </div>
+
+    <script>
+        // ================= תמונת רקע אחידה ומאגר שאלות =================
+        const welcomeImage = "main.jpg"; 
+        
+        const gameCategories = [
+            {
+                id: 0,
+                categoryName: "בעלי חיים",
+                completed: false,
+                questions: [
+                    { image: "animels/1.jpg", answer: "כבשה" },
+                    { image: "animels/2.jpg", answer: "איל" },
+                    { image: "animels/3.jpg", answer: "צבי" },
+                    { image: "animels/4.jpg", answer: "נחש" },
+                    { image: "animels/5.jpg", answer: "זאב" },
+                    { image: "animels/6.jpg", answer: "אריה" },
+                    { image: "animels/7.jpg", answer: "כלב" },
+                    { image: "animels/8.jpg", answer: "סוס" },
+                    { image: "animels/9.jpg", answer: "גמל" },
+                    { image: "animels/10.jpg", answer: "פרה" },
+                    { image: "animels/11.jpg", answer: "דג" },
+                    { image: "animels/12.jpg", answer: "דב" },
+                    { image: "animels/13.jpg", answer: "יונה" },
+                    { image: "animels/14.jpg", answer: "עורב" },
+                    { image: "animels/15.jpg", answer: "חסידה" },
+                    { image: "animels/16.jpg", answer: "ינשוף" },
+                    { image: "animels/17.jpg", answer: "צפרדע" },
+                    { image: "animels/18.jpg", answer: "כינים" },
+                    { image: "animels/19.jpg", answer: "עכבר" },
+                    { image: "animels/20.jpg", answer: "צב" },
+                    { image: "animels/21.jpg", answer: "תנין" },
+                    { image: "animels/22.jpg", answer: "לטאה" },
+                    { image: "animels/23.jpg", answer: "עקרב" },
+                    { image: "animels/24.jpg", answer: "עטלף" }
+                ]
+            },
+            {
+                id: 1,
+                categoryName: "מאכלים",
+                completed: false,
+                questions: [
+                    { image: "food/1.jpg", answer: "פיצה" },
+                    { image: "food/2.jpg", answer: "המבורגר" }
+                ]
+            },
+            {
+                id: 2,
+                categoryName: "אנשים בתורה",
+                completed: false,
+                questions: [
+                    { text: "שמרה על משה רבנו בתיבה בין קני הסוף", answer: "מרים" },
+                    { text: "האישה הראשונה בעולם שאכלה מעץ הדעת", answer: "חוה" },
+                    { text: "היה חותנו של משה רבנו וייעץ לו למנות שרי אלפים ושרי מאות", answer: "יתרו" },
+                    { text: "היה אחיו הגדול של משה רבנו והכהן הגדול הראשון", answer: "אהרון" },
+                    { text: "הושלך על ידי אחיו לבור ונמכר למצרים", answer: "יוסף" },
+                    { text: "המלך הרשע של מצרים שסירב לשלח את בני ישראל", answer: "פרעה" },
+                    { text: "המנהיג הנבחר שהחליף את משה והכניס את העם לארץ", answer: "יהשוע בן נון" },
+                    { text: "רימה את יעקב אבינו והחליף בין בנותיו בליל החתונה", answer: "לבן הארמי" },
+                    { text: "הייתה אשתו של עמרם ואמם של משה, אהרן ומרים", answer: "יוכבד" },
+                    { text: "אשתו של משה רבנו, בת יתרו, שהצילה את בנם במלון", answer: "צפורה" },
+                    { text: "הנביא הגוי שרצה לקלל את עם ישראל והאתון שלו דיברה אליו", answer: "בלעם" },
+                    { text: "מלך מואב ששכר את בלעם כדי לקלל את בני ישראל", answer: "בלק" },
+                    { text: "בנה את התיבה והציל את משפחתו ואת בעלי החיים מהמבול", answer: "נח" },
+                    { text: "אשתו הראשונה של אברהם אבינו שילדה את יצחק בגיל תשעים", answer: "שרה" },
+                    { text: "אשתו של יצחק אבינו שעלתה על הגמל ועזבה את ביתה למענו", answer: "רבקה" },
+                    { text: "בנו הבכור של אברהם אבינו שנולד מהגר המצרית", answer: "ישמעאל" },
+                    { text: "אחיו התאום של יעקב שמכר את בכורתו בעבור נזיד עדשים", answer: "עשו" },
+                    { text: "עמד בראש מחלוקת נגד משה והאדמה פצתה את פיה ובלעה אותו", answer: "קורח" },
+                    { text: "היה שותפו של יהושע בן נון והשתיק את העם בחטא המרגלים", answer: "כלב בן יפונה" },
+                    { text: "בת פרעה שמשתה את משה מהתיבה וגידלה אותו בארמון", answer: "בתיה" },
+                    { text: "האח הבכור שהציל את יוסף מהריגה והציע לזרוק אותו לבור", answer: "ראובן" },
+                    { text: "האח שנגש אל יוסף, נאם לפניו והיה ערב לבנימין", answer: "יהודה" },
+                    { text: "בנו הצעיר ביותר של יעקב אבינו, אחיה מאם של רחל", answer: "בנימין" },
+                    { text: "האיש העניו מכל אדם שהוציא את ישראל ממצרים וקיבל את התורה", answer: "משה רבנו" },
+                    { text: "האיש הראשון בעולם שנוצר מעפר מן האדמה", answer: "אדם הראשון" },
+                    { text: "האב הראשון של האומה שעמד בעשרה ניסיונות", answer: "אברהם אבינו" },
+                    { text: "נעקד על גבי המזבח בהר המוריה וחפר מחדש את הבארות", answer: "יצחק אבינו" }
+                ]
+            },
+            {
+                id: 3,
+                categoryName: "השלמה פסוקים",
+                completed: false,
+                questions: [
+                    { text: "בְּרֵאשִׁית בָּרָא אֱלֹהִים אֵת ______וְאֵת הָאָרֶץ.", answer: "הַשָּׁמַיִם" },
+                    { text: "וַיֹּאמֶר ה' אֶל אַבְרָם לֶךְ לְךָ מֵאַרְצְךָ וּמִמּוֹלַדְתְּךָ _________אֶל הָאָרֶץ אֲשֶׁר אַרְאֶךָ.", answer: "וּמִבֵּית אָבִיךָ" },
+                    { text: "וְיִשְׂרָאֵל אָהַב אֶת יוֹסֵף מִכָּל בָּנָיו כִּי בֶן זְקֻנִים הוּא לוֹ וְעָשָׂה לוֹ ________", answer: "כְּתֹנֶת פַּסִּים" },
+                    { text: "וַיֹּאמֶר יוֹסֵף אֶל אֶחָיו אֲנִי יוֹסֵף __________ וְלֹא יָכְלוּ אֶחָיו לַעֲנוֹת אֹתוֹ כִּי נִבְהֲלוּ מִפָּנָיו.", answer: "הַעוֹד אָבִי חָי" },
+                    { text: "הַמַּלְאָךְ הַגֹּאֵל אֹתִי מִכָּל רָע יְבָרֵךְ אֶת הַנְּעָרִים וְיִקָּרֵא בָהֶם שְׁמִי וְשֵׁם אֲבֹתַי אַבְרָהָם וְיִצְחָק וְיִדְגּו _____בְּקֶרֶב הָאָרֶץ.", answer: "לָרֹב" },
+                    { text: "וַיֹּאמֶר אַל תִּקְרַב הֲלֹם שַׁל נְעָלֶיךָ מֵעַל רַגְלֶיךָ כִּי הַמָּקוֹם אֲשֶׁר אַתָּה עוֹמֵד עָלָיו __________הוּא.", answer: "אַדְמַת קֹדֶשׁ" },
+                    { text: "זָכוֹר אֶת יוֹם ______לְקַדְּשׁוֹ.", answer: "הַשַּׁבָּת" },
+                    { text: "כַּבֵּד אֶת אָבִיךָ וְאֶת אִמֶּךָ לְמַעַן _________ עַל הָאֲדָמָה אֲשֶׁר ה' אֱלֹהֶיךָ נֹתֵן לָךְ.", answer: "יַאֲרִכוּן יָמֶיךָ" },
+                    { text: "אָז יָשִׁיר מֹשֶׁה וּבְנֵי יִשְׂרָאֵל אֶת הַשִּׁירָה הַזֹּאת לַה' וַיֹּאמְרוּ לֵאמֹר אָשִׁירָה לַה' כִּי גָאֹה גָּאָה _______ רָמָה בַיָּם.", answer: "סוּס וְרֹכְבוֹ" },
+                    { text: "לֹא תִקֹּם וְלֹא תִטֹּר אֶת בְּנֵי עַמֶּךָ _______ לְרֵעֲךָ כמוך", answer: "וְאָהַבְתָּ" },
+                    { text: "מִפְּנֵי שֵׂיבָה תָּקוּם _____ פְּנֵי זָקֵן", answer: "וְהָדַרְתָּ" },
+                    { text: "יְבָרֶכְךָ ה ______", answer: "וְיִשְׁמְרֶךָ" },
+                    { text: "וַיְהִי בִּנְסֹעַ הָאָרֹן וַיֹּאמֶר מֹשֶׁה קוּמָה ה- וְיָפֻצוּ אֹיְבֶיךָ _____ מְשַׂנְאֶיךָ מִפָּנֶיךָ.", answer: "וְיָנֻסוּ" },
+                    { text: "מַה טֹּבוּ אֹהָלֶיךָ יַעֲקֹב ____________", answer: "ִמשְׁכְּנֹתֶיךָ יִשְׂרָאֵל" },
+                    { text: "וְעָשׂוּ לָהם צִיצִת עַל כַּנְפֵי בִגְדֵיהֶם לְדֹרֹתָם וְנָתְנוּ עַל צִיצִת הַכָּנָף __________", answer: "פְּתִיל תְּכֵלֶת" },
+                    { text: "יָאֵר ה' פָּנָיו אֵלֶיךָ ______", answer: "וְיִחֻנֶּךָ" },
+                    { text: "שְׁמַע יִשְׂרָאֵל יְהוָה אֱלֹהֵינוּ יְהוָה _____", answer: "אֶחָד" },
+                    { text: "וּקְשַׁרְתָּם לְאוֹת עַל יָדֶךָ וְהָיוּ ______ בֵּין עינֶיךָ.", answer: "לְטֹטָפֹת" },
+                    { text: "ארץ ____ חלב ודבש", answer: "זבת" },
+                    { text: "וּכְתַבְתָּם עַל מְזֻזוֹת _____ וּבִשְׁעָרֶךָ.", answer: "בֵּיתֶךָ" },
+                    { text: "וְאָהַבְתָּ אֵת יְהוָה אֱלֹהֶיךָ בְּכָל ____________ וּבְכָל מְאֹדֶךָ.", answer: "לְבָבְךָ וּבְכָל נַפְשְׁך" },
+                    { text: "יִשָּׂא ה' פָּנָיו אֵלֶיךָ וְיָשֵׂם לְךָ ______", answer: "שָׁלוֹם" },
+                    { text: "וְהָיוּ הַדְּבָרִים הָאֵלֶּה אֲשֶׁר אָנֹכִי מְצַוְּךָ הַיּוֹם עַל לְבָבֶךָ. וְשִׁנַּנְתָּם לְבָנֶיךָ וְדִבַּרְתָּ בָּם בְּשִׁבְתְּךָ בְּבֵיתֶךָ וּבְלֶכְתְּךָ בַדֶּרֶךְ _____________", answer: "וּבְשָׁכְבְּךָ וּבְקוּמֶךָ" },
+                    { text: "וְאָכַלְתָּ ______ וּבֵרַכְתָּ אֵת יְהוָה אֱלֹהֶיךָ עַל הָאָרֶץ הַטֹּבָה אֲשֶׁר נָתַן לָךְ.", answer: "וְשָׂבָעְתָּ" }
+                ]
+            },
+            {
+                id: 4,
+                categoryName: "מי אמר למי",
+                completed: false,
+                questions: [
+                    { text: "הַעוֹד אָבִי חָי?", answer: "יוסף אל אחיו, בראשית" },
+                    { text: "שְׁלַח נְעָלֶיךָ מֵעַל רַגלֶיךָ", answer: "ה' אל משה בסנה, שמות" },
+                    { text: "נַעֲשֶׂה וְנִשְׁמָע", answer: "בני ישראל אל משה, שמות" },
+                    { text: "הַלְעֵטִנִי נָא מִן הָאָדֹם הָאָדֹם הַזֶּה", answer: "עשו אל יעקב, בראשית" },
+                    { text: "מַה טֹּבוּ אֹהָלֶיךָ יַעֲקֹב", answer: "בלעם אל בני ישראל, במדבר" },
+                    { text: "אֶת אַחַי אָנֹכִי מְבַקֵּשׁ", answer: "יוסף אל האיש בשדה, בראשית" },
+                    { text: "לָמָּה זֶּה צָחֲקָה שָׂרָה?", answer: "ה' אל אברהם, בראשית" },
+                    { text: "הַשֹּׁמֵר אָחִי אָנֹכִי?", answer: "קין אל ה', בראשית" },
+                    { text: "אִם אֶמְצָא בִסְדֹם חֲמִשִּׁים צַדִּיקִם וְנָשָׂאתִי לְכָל הַמָּקוֹם בַּעֲבוּרָם", answer: "ה' אל אברהם, בראשית" },
+                    { text: "הִנֵּה הָאֵשׁ וְהָעֵצִים וְאַיֵּה הַשֶּׂה לְעֹלָה", answer: "יצחק אל אברהם, בראשית" },
+                    { text: "מִי שָׂמְךָ לְאִישׁ שַׂר וְשֹׁפֵט עָלֵינוּ? הַלְהָרְגֵנִי אַתָּה אֹמֵר כַּאֲשֶׁר הָרַגְתָּ אֶת הַמִּצְרִי?", answer: "האיש העברי אל משה, שמות" },
+                    { text: "קוּמוּ צְּאוּ מִתּוֹךְ עַמִּי גַּם אַתֶּם גַּם בְּנֵי יִשְׂרָאֵל", answer: "פרעה אל משה ואהרון, שמות" },
+                    { text: "לָמָּה הִכִּיתָ אֶת אֲתֹנְךָ זֶה שָׁלוֹשׁ רְגָלִים", answer: "מלאך ה' אל בלעם, במדבר" }
+                ]
+            },
+        ];
+        // =============================================================
+
+        const STATES = {
+            LANDING_SCREEN: "LANDING_SCREEN",     
+            SELECTION_SCREEN: "SELECTION_SCREEN", 
+            START_SCREEN: "START_SCREEN",         
+            COUNTDOWN: "COUNTDOWN", 
+            RUNNING: "RUNNING",                   
+            SHOWING_ANSWER: "SHOWING_ANSWER"     
+        };
+
+        let gameState = STATES.LANDING_SCREEN;
+        let currentPlayer = 1;
+        let timers = { 1: 20, 2: 20 };
+        
+        let selectedCategoryIdx = null; 
+        let currentQuestionIndex = 0;   
+        let intervalId = null;
+        let shouldApplyPenalty = false; 
+
+        // אלמנטים
+        const scoreboard = document.getElementById('scoreboard');
+        const welcomeLandingScreen = document.getElementById('welcome-landing-screen');
+        const landingImgElement = document.getElementById('landing-img-element');
+        const gridContainer = document.getElementById('categories-grid');
+        const arena = document.getElementById('arena');
+        const countdownDisplay = document.getElementById('countdown-display');
+        const imageContainer = document.getElementById('image-container');
+        const textQuestionBox = document.getElementById('text-question-box');
+        
+        const p1Box = document.getElementById('p1-box');
+        const p2Box = document.getElementById('p2-box');
+        const p1TimerText = document.getElementById('p1-timer');
+        const p2TimerText = document.getElementById('p2-timer');
+        const gameImg = document.getElementById('game-img');
+        const statusDisplay = document.getElementById('status-display');
+        const answerDisplay = document.getElementById('answer-display');
+        const endScreen = document.getElementById('end-screen');
+
+        function initGame() {
+            timers = { 1: 20, 2: 20 };
+            currentPlayer = 1;
+            gameCategories.forEach(cat => cat.completed = false);
+            
+            gameState = STATES.LANDING_SCREEN;
+            landingImgElement.src = welcomeImage;
+            welcomeLandingScreen.style.display = 'flex';
+            gridContainer.style.display = 'none';
+            arena.style.display = 'none';
+            scoreboard.style.display = 'none';
+
+            updateVisuals();
+        }
+
+        function showSelectionGrid() {
+            gameState = STATES.SELECTION_SCREEN;
+            welcomeLandingScreen.style.display = 'none'; 
+            arena.style.display = 'none';                
+            scoreboard.style.display = 'none';           
+            gridContainer.style.display = 'grid';        
+
+            p1Box.classList.remove('active-p1');
+            p2Box.classList.remove('active-p2');
+
+            gridContainer.innerHTML = '';
+            gameCategories.forEach(cat => {
+                const card = document.createElement('div');
+                card.className = `category-card ${cat.completed ? 'completed' : ''}`;
+                card.innerHTML = `
+                    <div>${cat.categoryName}</div>
+                    <span class="status-tag">${cat.completed ? '(הושלם)' : 'לחץ לבחירה'}</span>
+                `;
+                if (!cat.completed) {
+                    card.addEventListener('click', () => selectCategory(cat.id));
+                }
+                gridContainer.appendChild(card);
+            });
+
+            if (gameCategories.every(cat => cat.completed)) {
+                declareWinner(timers[1] >= timers[2] ? 1 : 2, "כל הקטגוריות בלוח הושלמו!");
+            }
+        }
+
+        function selectCategory(id) {
+            selectedCategoryIdx = gameCategories.findIndex(cat => cat.id === id);
+            currentQuestionIndex = 0;
+            gameState = STATES.START_SCREEN;
+            shouldApplyPenalty = false;
+
+            gridContainer.style.display = 'none'; 
+            arena.style.display = 'flex';         
+            imageContainer.style.display = 'flex';
+            textQuestionBox.style.display = 'none';
+            countdownDisplay.style.display = 'none';
+            gameImg.style.display = 'block';
+            gameImg.src = welcomeImage;
+
+            const cat = gameCategories[selectedCategoryIdx];
+            statusDisplay.innerText = `הקטגוריה: ${cat.categoryName}`;
+            answerDisplay.style.visibility = 'hidden';
+        }
+
+        function startCountdown() {
+            gameState = STATES.COUNTDOWN;
+            imageContainer.style.display = 'none'; 
+            textQuestionBox.style.display = 'none';
+            countdownDisplay.style.display = 'block'; 
+            
+            let count = 3;
+            countdownDisplay.innerText = count;
+            statusDisplay.innerText = "המשחק מתחיל בעוד...";
+
+            let countdownId = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    countdownDisplay.innerText = count;
+                } else {
+                    clearInterval(countdownId);
+                    countdownDisplay.style.display = 'none';
+                    
+                    loadQuestion();
+                    startTurn();
+                }
+            }, 1000);
+        }
+
+        function loadQuestion() {
+            const cat = gameCategories[selectedCategoryIdx];
+            
+            if (currentQuestionIndex >= cat.questions.length) {
+                cat.completed = true;
+                clearInterval(intervalId);
+                showSelectionGrid(); 
+                return;
+            }
+
+            welcomeLandingScreen.style.display = 'none';
+            const q = cat.questions[currentQuestionIndex];
+
+            // בדיקה האם מדובר בשאלה מילולית או שאלת תמונה
+            if (q.text) {
+                // שאלת טקסט מילולית
+                imageContainer.style.display = 'none';
+                textQuestionBox.style.display = 'block';
+                textQuestionBox.innerText = q.text;
+            } else {
+                // שאלת תמונה
+                textQuestionBox.style.display = 'none';
+                imageContainer.style.display = 'flex';
+                gameImg.style.display = 'block';
+                gameImg.src = q.image;
+            }
+
+            answerDisplay.innerText = q.answer;
+            answerDisplay.style.visibility = 'hidden';
+        }
+
+        function startTurn() {
+            gameState = STATES.RUNNING;
+            scoreboard.style.display = 'flex'; 
+            statusDisplay.innerText = `תור מתמודד ${currentPlayer} - השעון רץ!`;
+            
+            p1Box.classList.toggle('active-p1', currentPlayer === 1);
+            p2Box.classList.toggle('active-p2', currentPlayer === 2);
+
+            clearInterval(intervalId);
+            intervalId = setInterval(() => {
+                timers[currentPlayer]--;
+                updateVisuals();
+
+                if (timers[currentPlayer] <= 0) {
+                    clearInterval(intervalId);
+                    declareWinner(currentPlayer === 1 ? 2 : 1, "נגמר הזמן!");
+                }
+            }, 1000);
+        }
+
+        function triggerPenaltyStop() {
+            if (gameState !== STATES.RUNNING) return;
+            
+            clearInterval(intervalId);
+            shouldApplyPenalty = true; 
+            answerDisplay.style.visibility = 'visible';
+            statusDisplay.innerText = `מתמודד ${currentPlayer} ביקש עבור`;
+            gameState = STATES.SHOWING_ANSWER;
+        }
+
+        function handleSpaceAction() {
+            if (endScreen.style.display === 'flex' || gameState === STATES.COUNTDOWN) return;
+
+            if (gameState === STATES.LANDING_SCREEN) {
+                showSelectionGrid();
+                return;
+            }
+
+            if (gameState === STATES.SELECTION_SCREEN) return;
+
+            const cat = gameCategories[selectedCategoryIdx];
+
+            if (gameState === STATES.START_SCREEN) {
+                startCountdown();
+            }
+            else if (gameState === STATES.RUNNING) {
+                clearInterval(intervalId);
+                shouldApplyPenalty = false; 
+                answerDisplay.style.visibility = 'visible';
+                statusDisplay.innerText = `מתמודד ${currentPlayer} עצר את השעון! לחץ להמשך.`;
+                gameState = STATES.SHOWING_ANSWER;
+            } 
+            else if (gameState === STATES.SHOWING_ANSWER) {
+                if (shouldApplyPenalty) {
+                    timers[currentPlayer] = Math.max(0, timers[currentPlayer] - 3);
+                    shouldApplyPenalty = false; 
+                    updateVisuals();
+                    
+                    if (timers[currentPlayer] <= 0) {
+                        declareWinner(currentPlayer === 1 ? 2 : 1, "נגמר הזמן בעקבות קנס!");
+                        return;
+                    }
+                } else {
+                    currentPlayer = currentPlayer === 1 ? 2 : 1;
+                }
+
+                currentQuestionIndex++;
+                loadQuestion();
+                
+                if (gameState === STATES.RUNNING || (gameState !== STATES.SELECTION_SCREEN && currentQuestionIndex < cat.questions.length)) {
+                    startTurn();
+                }
+            }
+        }
+
+        function updateVisuals() {
+            p1TimerText.innerText = timers[1];
+            p2TimerText.innerText = timers[2];
+        }
+
+        function declareWinner(winner, reason) {
+            clearInterval(intervalId);
+            document.getElementById('winner-text').innerText = `מתמודד ${winner} ניצח! (${reason})`;
+            endScreen.style.display = 'flex';
+        }
+
+        function resetGame() {
+            endScreen.style.display = 'none';
+            initGame();
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === ' ' || e.code === 'Space') {
+                e.preventDefault(); 
+                handleSpaceAction();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                triggerPenaltyStop(); 
+            }
+        });
+
+        window.onload = initGame;
+    </script>
+</body>
+</html>
