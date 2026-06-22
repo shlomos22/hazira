@@ -311,16 +311,17 @@
         }
 
         .overlay h1 { font-size: 3.5rem; color: #f59e0b; margin-bottom: 20px; white-space: pre-line; }
-        .restart-btn {
-            padding: 15px 40px;
+        
+        .space-hint {
             font-size: 1.5rem;
-            font-weight: bold;
-            background: #10b981;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: transform 0.2s;
+            color: #94a3b8;
+            margin-top: 20px;
+            animation: pulse 1.5s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { opacity: 0.5; }
+            to { opacity: 1; }
         }
     </style>
 </head>
@@ -370,7 +371,7 @@
 
     <div class="overlay" id="end-screen">
         <h1 id="winner-text">המשחק נגמר!</h1>
-        <button class="restart-btn" id="overlay-btn" onclick="resetGame()">שחק שוב מהתחלה</button>
+        <div class="space-hint">לחצו על מקש רווח כדי להמשיך</div>
     </div>
 
     <script>
@@ -391,7 +392,7 @@
                 id: 0,
                 categoryName: "בעלי חיים",
                 completed: false,
-                winnerName: null, // שדה חדש לשמירת שם המנצח בקטגוריה
+                winnerName: null, 
                 questions: [
                     { image: "animels/1.jpg", answer: "כבשה" },
                     { image: "animels/2.jpg", answer: "איל" },
@@ -535,7 +536,7 @@
                     { text: "הַשֹּׁמֵר אָחִי אָנֹכִי?", answer: "קין אל ה', בראשית" },
                     { text: "אִם אֶמְצָא בִסְדֹם חֲמִשִּׁים צַדִּיקִם וְנָשָׂאתִי לְכָל הַמָּקוֹם בַּעֲבוּרָם", answer: "ה' אל אברהם, בראשית" },
                     { text: "הִנֵּה הָאֵשׁ וְהָעֵצִים וְאַיֵּה הַשֶּׂה לְעֹלָה", answer: "יצחק אל אברהם, בראשית" },
-                    { text: "מִי שָׂמְךָ לְאִישׁ שַׂר וְשֹׁפֵט עָלֵינוּ? הַלְהָרְגֵנִי尖תָּה אֹמֵר כַּאֲשֶׁר הָרַגְתָּ אֶת הַמִּצְרִי?", answer: "האיש העברי אל משה, שמות" },
+                    { text: "מִי שָׂמְךָ לְאִישׁ שַׂר וְשֹׁפֵט עָלֵינוּ? הַלְהָרְגֵנִי מִשָּׁם אַתָּה אֹמֵר כַּאֲשֶׁר הָרַגְתָּ אֶת הַמִּצְרִי?", answer: "האיש העברי אל משה, שמות" },
                     { text: "קוּמוּ צְּאוּ מִתּוֹךְ עַמִּי גַּם אַתֶּם גַּם בְּנֵי יִשְׂרָאֵל", answer: "פרעה אל משה ואהרון, שמות" },
                     { text: "לָמָּה הִכִּיתָ אֶת אֲתֹנְךָ זֶה שָׁלוֹשׁ רְגָלִים", answer: "מלאך ה' אל בלעם, במדבר" }
                 ]
@@ -590,7 +591,6 @@
         const answerDisplay = document.getElementById('answer-display');
         const endScreen = document.getElementById('end-screen');
         const winnerText = document.getElementById('winner-text');
-        const overlayBtn = document.getElementById('overlay-btn');
 
         function initGame() {
             timers = { 1: 20, 2: 20 };
@@ -598,7 +598,6 @@
             currentPlayer = 1;
             eliminatedGroups = { 1: false, 2: false, 3: false, 4: false, 5: false };
             
-            // אתחול מקורי של הקטגוריות
             gameCategories[0].groupId = 1;
             gameCategories[1].groupId = 2;
             gameCategories[2].groupId = 3;
@@ -655,14 +654,12 @@
                     <span class="status-tag">${tagContent}</span>
                 `;
                 
-                // הריבוע לחיץ כל עוד הקטגוריה לא הושלמה (גם אם הבעלות עברה קבוצה!)
                 if (!cat.completed) {
                     card.addEventListener('click', () => startOpponentSelection(cat.id));
                 }
                 gridContainer.appendChild(card);
             });
 
-            // המשחק נגמר רק כשכל הקטגוריות בלוח הושלמו פנימית
             if (gameCategories.every(cat => cat.completed)) {
                 declareFinalWinner();
             }
@@ -705,11 +702,9 @@
             gameImg.style.display = 'block';
             gameImg.src = welcomeImage;
             
-            // --- שורות התיקון החדשות לאיפוס מלא של הסיבוב ---
-            timers = { 1: 20, 2: 20 }; // מאפס את הטיימרים של שני המשתתפים ל-20 שניות
-            answerDisplay.style.visibility = 'hidden'; // מעלים ומסתיר את התשובה מהסיבוב הקודם
-            currentPlayer = 1; // מחזיר את התור תמיד למתמודד 1 בהתחלת קטגוריה
-            // --------------------------------------------------
+            timers = { 1: 20, 2: 20 }; 
+            answerDisplay.style.visibility = 'hidden'; 
+            currentPlayer = 1; 
             
             currentQuestionIndex = 0;
             gameState = STATES.START_SCREEN;
@@ -754,7 +749,6 @@
                 
                 let winner;
                 let winningGroupNum, losingGroupNum;
-                let reason = `תמו השאלות בשלב זה!\nציון השלב:\n${groupNames[p1GroupNum]}: ${scores[1]} תשובות | ${groupNames[p2GroupNum]}: ${scores[2]} תשובות`;
                 
                 if (scores[1] > scores[2]) {
                     winner = 1;
@@ -771,15 +765,12 @@
                 if (winner !== "תיקו") {
                     cat.winnerName = groupNames[winningGroupNum];
                     eliminatedGroups[losingGroupNum] = true; 
-                    reason += `\n\n** ${groupNames[losingGroupNum]} הודחה מהטורניר! **`;
-                    // פונקציית הקסם: מעבירה את כל הקטגוריות הפנויות של המפסיד לטובת המנצח
                     transferOwnership(losingGroupNum, winningGroupNum);
                 } else {
                     cat.winnerName = "תיקו";
-                    reason += `\n\n(במצב של תיקו אף קבוצה לא מודחת והבעלויות לא משתנות)`;
                 }
                 
-                showStageSummary(winner, reason);
+                showStageSummary(winner);
                 return;
             }
 
@@ -829,21 +820,16 @@
                     cat.winnerName = groupNames[winningGroupNum];
                     eliminatedGroups[losingGroupNum] = true; 
                     
-                    // העברת בעלות גם במקרה של הפסד זמן
                     transferOwnership(losingGroupNum, winningGroupNum);
-                    
-                    const reason = `לשעון של ${groupNames[losingGroupNum]} נגמר הזמן!\n\n** ${groupNames[losingGroupNum]} הודחה מהטורניר! **`;
-                    showStageSummary(winner, reason);
+                    showStageSummary(winner);
                 }
             }, 1000);
         }
 
-        // פונקציית הקסם להעברת בעלות על קטגוריות שלא שוחקו
         function transferOwnership(fromGroup, toGroup) {
             gameCategories.forEach(cat => {
-                // אם הקטגוריה שייכת לקבוצה המפסידה ועוד לא שיחקו בה
                 if (cat.groupId === fromGroup && !cat.completed) {
-                    cat.groupId = toGroup; // הקבוצה המנצחת מקבלת בעלות!
+                    cat.groupId = toGroup; 
                 }
             });
         }
@@ -907,10 +893,8 @@
                         cat.winnerName = groupNames[winningGroupNum];
                         eliminatedGroups[losingGroupNum] = true; 
                         
-                        // העברת בעלות גם במקרה של הפסד זמן בגלל קנס
                         transferOwnership(losingGroupNum, winningGroupNum);
-                        
-                        showStageSummary(winner, `לשעון של ${groupNames[losingGroupNum]} נגמר הזמן בעקבות קנס!\n\n** ${groupNames[losingGroupNum]} הודחה מהטורניר! **`);
+                        showStageSummary(winner);
                         return;
                     }
                 } else {
@@ -931,17 +915,15 @@
             p2TimerText.innerText = timers[2];
         }
 
-        function showStageSummary(winner, reason) {
+        function showStageSummary(winner) {
             gameState = STATES.STAGE_SUMMARY; 
             
             if (winner === "תיקו") {
-                winnerText.innerText = `השלב הסתיים בתיקו!\n${reason}`;
+                winnerText.innerText = `השלב הסתיים בתיקו!`;
             } else {
                 const winningGroupName = (winner === 1) ? groupNames[p1GroupNum] : groupNames[p2GroupNum];
-                winnerText.innerText = `${winningGroupName} ניצחה בשלב זה!\n\n${reason}`;
+                winnerText.innerText = `${winningGroupName} ניצחה בשלב זה!`;
             }
-            overlayBtn.innerText = "חזור ללוח הקטגוריות (רווח)";
-            overlayBtn.setAttribute("onclick", "closeSummaryAndGoToGrid()");
             endScreen.style.display = 'flex';
         }
 
@@ -960,13 +942,11 @@
             }
 
             if (aliveGroups.length === 1) {
-                winnerText.innerText = `הטורניר הסתיים!\n\nהקבוצה האלופה המנצחת של כל הזירה היא:\n👑 ${aliveGroups[0]} 👑`;
+                winnerText.innerText = `הטורניר הסתיים!\n\nהקבוצה האלופה:\n👑 ${aliveGroups[0]} 👑`;
             } else {
-                winnerText.innerText = `הטורניר הסתיים!\n\nהקבוצות ששרדו והגיעו לקו הסיום:\n${aliveGroups.join(' | ')}`;
+                winnerText.innerText = `הטורניר הסתיים!\n\nהקבוצות ששרדו:\n${aliveGroups.join(' | ')}`;
             }
             
-            overlayBtn.innerText = "שחק שוב מהתחלה (רווח)";
-            overlayBtn.setAttribute("onclick", "resetGame()");
             endScreen.style.display = 'flex';
         }
 
