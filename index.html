@@ -3,27 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>זירת הזיהוי - תמונות ושאלות מילוליות</title>
+    <title>זירה - חמישה חומשי תורה</title>
     <style>
         :root {
             --bg-color: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.85); /* שקיפות עדינה כדי לראות את הרקע */
+            --card-bg: rgba(30, 41, 59, 0.85); 
             --text-color: #f8fafc;
             --accent-p1: #ef4444;
             --accent-p2: #3b82f6;
-            --completed-bg: #1e293b;
-            --completed-text: #475569;
+            --completed-bg: rgba(245, 158, 11, 0.25);
+            --completed-border: #f59e0b;
+            --completed-text: #fef08a;
+            --eliminated-bg: rgba(71, 85, 105, 0.4);
+            --eliminated-text: #94a3b8;
         }
 
         body {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            background-image: url('background.jpg'); /* תמונת הרקע שמלווה את כל האתר */
+            background-image: url('background.jpg'); 
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            background-attachment: fixed; /* שומר על הרקע קבוע */
+            background-attachment: fixed; 
             color: var(--text-color);
             font-family: system-ui, -apple-system, sans-serif;
             display: flex;
@@ -33,15 +36,11 @@
             user-select: none;
         }
 
-        /* לוח תוצאות וטיימרים - כעת ממוקם בצדדים */
         .scoreboard {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            pointer-events: none; /* מונע חסימת קליקים על כפתורים מתחתיו */
-            display: none; /* מופעל רק בריצת משחק */
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none; 
+            display: none; 
             z-index: 10;
         }
 
@@ -54,16 +53,15 @@
             border-radius: 16px;
             background: rgba(30, 41, 59, 0.9);
             backdrop-filter: blur(8px);
-            min-width: 150px;
+            min-width: 170px;
             transition: all 0.3s ease;
             border: 3px solid transparent;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            pointer-events: auto; /* מחזיר אינטראקציה לתיבות עצמן אם צריך */
+            pointer-events: auto; 
         }
 
-        /* מיקום צדדי ייעודי לכל מתמודד */
-        #p1-box { right: 30px; } /* מתמודד 1 בצד ימין */
-        #p2-box { left: 30px; }  /* מתמודד 2 בצד שמאל */
+        #p1-box { right: 30px; } 
+        #p2-box { left: 30px; }  
 
         .player-box.active-p1 { border-color: var(--accent-p1); box-shadow: 0 0 25px var(--accent-p1); }
         .player-box.active-p2 { border-color: var(--accent-p2); box-shadow: 0 0 25px var(--accent-p2); }
@@ -71,17 +69,15 @@
         .player-title { font-size: 1.3rem; font-weight: bold; margin-bottom: 5px; }
         .timer { font-size: 3rem; font-weight: 900; font-variant-numeric: tabular-nums; }
 
-        /* אזור התוכן המרכזי השליט */
         .main-content {
             flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
-            padding: 0 220px; /* מונע מהתוכן המרכזי להתנגש במתמודדים בצדדים */
+            padding: 0 220px; 
         }
 
-        /* מסך כניסה ראשי */
         .welcome-landing-screen {
             display: flex;
             flex-direction: column;
@@ -101,32 +97,37 @@
             margin-bottom: 20px;
         }
 
-        /* מסך בחירת קטגוריות - נקי */
+        /* פריסת קטגוריות - ממורכזת ורספונסיבית על בסיס Flex עם רוחב מקסימלי קשיח */
         .categories-grid {
             display: none; 
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center; 
             gap: 25px;
             width: 100%;
-            max-width: 850px;
+            max-width: 720px; 
             padding: 20px;
             z-index: 4;
+            margin: 0 auto;
         }
 
         .category-card {
             background-color: var(--card-bg);
             border: 2px solid #334155;
             border-radius: 16px;
-            padding: 40px 20px;
+            padding: 30px 15px;
             text-align: center;
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: bold;
             cursor: pointer;
             backdrop-filter: blur(4px);
             transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            width: 220px;
+            box-sizing: border-box;
         }
 
-        .category-card:hover:not(.completed) {
+        .category-card:hover:not(.completed):not(.eliminated) {
             transform: translateY(-5px);
             border-color: #38bdf8;
             box-shadow: 0 10px 20px rgba(56, 189, 248, 0.2);
@@ -134,23 +135,85 @@
 
         .category-card.completed {
             background-color: var(--completed-bg);
-            border-color: #1e293b;
+            border: 2px solid var(--completed-border);
+            color: var(--completed-text);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+        }
+
+        .category-card.eliminated {
+            background-color: var(--eliminated-bg);
+            border: 2px dashed #475569;
             color: var(--completed-text);
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
-            text-decoration: line-through;
-            opacity: 0.5;
+            opacity: 0.4;
         }
 
         .category-card .status-tag {
             display: block;
-            font-size: 0.9rem;
-            margin-top: 10px;
+            font-size: 0.85rem;
+            margin-top: 8px;
             color: #38bdf8;
         }
 
-        /* אזור זירת המשחק */
+        .category-card.completed .status-tag {
+            color: #f59e0b;
+            font-weight: bold;
+        }
+        
+        .category-card.eliminated .status-tag {
+            color: #ef4444;
+            font-weight: bold;
+        }
+
+        .opponent-select-box {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.95);
+            border: 3px solid #38bdf8;
+            padding: 30px;
+            border-radius: 20px;
+            z-index: 15;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+            text-align: center;
+        }
+
+        .opponent-select-box h2 {
+            margin-top: 0;
+            font-size: 2rem;
+            color: #38bdf8;
+        }
+
+        .opponent-buttons-container {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .opponent-btn {
+            background: #1e293b;
+            border: 2px solid #475569;
+            color: white;
+            padding: 15px 25px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .opponent-btn:hover {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            transform: scale(1.05);
+        }
+
         .game-arena {
             display: none; 
             flex-direction: column;
@@ -166,8 +229,8 @@
 			max-height: 55vh;
 			border-radius: 16px;
 			overflow: hidden;
-			background: transparent; /* שונה מ-#000 לשקוף */
-			box-shadow: none;        /* בוטל כדי שלא תהיה צללית של ריבוע נסתר */
+			background: transparent; 
+			box-shadow: none;        
 			display: flex;
 			align-items: center;
 			justify-content: center;
@@ -180,7 +243,6 @@
             display: none;
         }
 
-        /* תיבת טקסט ייעודית עבור שאלות מילוליות */
         .text-question-box {
             background: var(--card-bg);
             backdrop-filter: blur(4px);
@@ -198,12 +260,11 @@
             display: none;
         }
 
-        /* אלמנט ייעודי לספירה לאחור דרמטית */
         .countdown-overlay {
 			font-size: 30rem;
 			font-weight: 900;
-			color: #ef4444; /* שינוי לאדום בוהק */
-			text-shadow: 0 0 10px #ef4444, 0 0 30px rgba(239, 68, 68, 0.5); /* הילה אדומה כפולה ועמוקה */
+			color: #ef4444; 
+			text-shadow: 0 0 10px #ef4444, 0 0 30px rgba(239, 68, 68, 0.5); 
 			display: none;
 			margin-bottom: 20px;
 		}
@@ -235,7 +296,6 @@
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
 
-        /* מסך סיום / מעבר שלב */
         .overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -262,18 +322,17 @@
             cursor: pointer;
             transition: transform 0.2s;
         }
-        .restart-btn:hover { transform: scale(1.05); }
     </style>
 </head>
 <body>
 
     <div class="scoreboard" id="scoreboard">
         <div class="player-box" id="p1-box">
-            <div class="player-title" style="color: var(--accent-p1)">מתמודד 1</div>
+            <div class="player-title" id="p1-title" style="color: var(--accent-p1)">קבוצה א'</div>
             <div class="timer" id="p1-timer">20</div>
         </div>
         <div class="player-box" id="p2-box">
-            <div class="player-title" style="color: var(--accent-p2)">מתמודד 2</div>
+            <div class="player-title" id="p2-title" style="color: var(--accent-p2)">קבוצה ב'</div>
             <div class="timer" id="p2-timer">20</div>
         </div>
     </div>
@@ -286,6 +345,11 @@
         </div>
 
         <div class="categories-grid" id="categories-grid"></div>
+
+        <div class="opponent-select-box" id="opponent-select-box">
+            <h2 id="opponent-box-title">מי הקבוצה המאתגרת?</h2>
+            <div class="opponent-buttons-container" id="opponent-buttons-container"></div>
+        </div>
 
         <div class="game-arena" id="arena">
             <div id="countdown-display" class="countdown-overlay">3</div>
@@ -310,14 +374,24 @@
     </div>
 
     <script>
-        // ================= תמונת רקע אחידה ומאגר שאלות =================
         const welcomeImage = "main.jpg"; 
         
+        const groupNames = {
+            1: "קבוצה 1",
+            2: "קבוצה 2",
+            3: "קבוצה 3",
+            4: "קבוצה 4",
+            5: "קבוצה 5"
+        };
+
+        let eliminatedGroups = { 1: false, 2: false, 3: false, 4: false, 5: false };
+
         const gameCategories = [
             {
                 id: 0,
                 categoryName: "בעלי חיים",
                 completed: false,
+                winnerName: null, // שדה חדש לשמירת שם המנצח בקטגוריה
                 questions: [
                     { image: "animels/1.jpg", answer: "כבשה" },
                     { image: "animels/2.jpg", answer: "איל" },
@@ -349,6 +423,7 @@
                 id: 1,
                 categoryName: "מאכלים",
                 completed: false,
+                winnerName: null,
                 questions: [
                     { image: "foods/1.jpg", answer: "חלה" },
                     { image: "foods/2.jpg", answer: "רימונים" },
@@ -381,6 +456,7 @@
                 id: 2,
                 categoryName: "אנשים בתורה",
                 completed: false,
+                winnerName: null,
                 questions: [
                     { text: "שמרה על משה רבנו בתיבה בין קני הסוף", answer: "מרים" },
                     { text: "האישה הראשונה בעולם שאכלה מעץ הדעת", answer: "חוה" },
@@ -415,6 +491,7 @@
                 id: 3,
                 categoryName: "השלמה פסוקים",
                 completed: false,
+                winnerName: null,
                 questions: [
                     { text: "בְּרֵאשִׁית בָּרָא אֱלֹהִים אֵת ______וְאֵת הָאָרֶץ.", answer: "הַשָּׁמַיִם" },
                     { text: "וַיֹּאמֶר ה' אֶל אַבְרָם לֶךְ לְךָ מֵאַרְצְךָ וּמִמּוֹלַדְתְּךָ _________אֶל הָאָרֶץ אֲשֶׁר אַרְאֶךָ.", answer: "וּמִבֵּית אָבִיךָ" },
@@ -438,7 +515,7 @@
                     { text: "וּכְתַבְתָּם עַל מְזֻזוֹת _____ וּבִשְׁעָרֶךָ.", answer: "בֵּיתֶךָ" },
                     { text: "וְאָהַבְתָּ אֵת יְהוָה אֱלֹהֶיךָ בְּכָל ____________ וּבְכָל מְאֹדֶךָ.", answer: "לְבָבְךָ וּבְכָל נַפְשְׁך" },
                     { text: "יִשָּׂא ה' פָּנָיו אֵלֶיךָ וְיָשֵׂם לְךָ ______", answer: "שָׁלוֹם" },
-                    { text: "וְהָיוּ הַדְּבָרִים הָאֵלֶּה אֲשֶׁר אָנֹכִי מְצัוְּךָ הַיּוֹם עַל לְבָבֶךָ. וְשִׁנַּנְתָּם לְבָנֶיךָ וְדִבַּרְתָּ בָּם בְּשִׁבְתְּךָ בְּבֵיתֶךָ וּבְלֶכְתְּךָ בַדֶּרֶךְ _____________", answer: "וּבְשָׁכְבְּךָ וּבְקוּמֶךָ" },
+                    { text: "וְהָיוּ הַדְּבָרִים הָאֵלֶּה אֲשֶׁר אָנֹכִי מְצַוְּךָ הַיּוֹם עַל לְבָבֶךָ. וְשִׁנַּנְתָּם לְבָנֶיךָ וְדִבַּרְתָּ בָּם בְּשִׁבְתְּךָ בְּבֵיתֶךָ וּבְלֶכְתְּךָ בַדֶּרֶךְ _____________", answer: "וּבְשָׁכְבְּךָ וּבְקוּמֶךָ" },
                     { text: "וְאָכַלְתָּ ______ וּבֵרַכְתָּ אֵת יְהוָה אֱלֹהֶיךָ עַל הָאָרֶץ הַטֹּבָה אֲשֶׁר נָתַן לָךְ.", answer: "וְשָׂבָעְתָּ" }
                 ]
             },
@@ -446,6 +523,7 @@
                 id: 4,
                 categoryName: "מי אמר למי",
                 completed: false,
+                winnerName: null,
                 questions: [
                     { text: "הַעוֹד אָבִי חָי?", answer: "יוסף אל אחיו, בראשית" },
                     { text: "שְׁלַח נְעָלֶיךָ מֵעַל רַגלֶיךָ", answer: "ה' אל משה בסנה, שמות" },
@@ -457,7 +535,7 @@
                     { text: "הַשֹּׁמֵר אָחִי אָנֹכִי?", answer: "קין אל ה', בראשית" },
                     { text: "אִם אֶמְצָא בִסְדֹם חֲמִשִּׁים צַדִּיקִם וְנָשָׂאתִי לְכָל הַמָּקוֹם בַּעֲבוּרָם", answer: "ה' אל אברהם, בראשית" },
                     { text: "הִנֵּה הָאֵשׁ וְהָעֵצִים וְאַיֵּה הַשֶּׂה לְעֹלָה", answer: "יצחק אל אברהם, בראשית" },
-                    { text: "מִי שָׂמְךָ לְאִישׁ שַׂר וְשֹׁפֵט עָלֵינוּ? הַלְהָרְגֵנִי אַתָּה אֹמֵר כַּאֲשֶׁר הָרַגְתָּ אֶת הַמִּצְרִי?", answer: "האיש העברי אל משה, שמות" },
+                    { text: "מִי שָׂמְךָ לְאִישׁ שַׂר וְשֹׁפֵט עָלֵינוּ? הַלְהָרְגֵנִי尖תָּה אֹמֵר כַּאֲשֶׁר הָרַגְתָּ אֶת הַמִּצְרִי?", answer: "האיש העברי אל משה, שמות" },
                     { text: "קוּמוּ צְּאוּ מִתּוֹךְ עַמִּי גַּם אַתֶּם גַּם בְּנֵי יִשְׂרָאֵל", answer: "פרעה אל משה ואהרון, שמות" },
                     { text: "לָמָּה הִכִּיתָ אֶת אֲתֹנְךָ זֶה שָׁלוֹשׁ רְגָלִים", answer: "מלאך ה' אל בלעם, במדבר" }
                 ]
@@ -467,6 +545,7 @@
         const STATES = {
             LANDING_SCREEN: "LANDING_SCREEN",     
             SELECTION_SCREEN: "SELECTION_SCREEN", 
+            OPPONENT_SELECT: "OPPONENT_SELECT", 
             START_SCREEN: "START_SCREEN",         
             COUNTDOWN: "COUNTDOWN", 
             RUNNING: "RUNNING",                   
@@ -476,6 +555,8 @@
         };
 
         let gameState = STATES.LANDING_SCREEN;
+        let p1GroupNum = null; 
+        let p2GroupNum = null; 
         let currentPlayer = 1;
         let timers = { 1: 20, 2: 20 };
         let scores = { 1: 0, 2: 0 }; 
@@ -494,11 +575,16 @@
         const countdownDisplay = document.getElementById('countdown-display');
         const imageContainer = document.getElementById('image-container');
         const textQuestionBox = document.getElementById('text-question-box');
+        const opponentSelectBox = document.getElementById('opponent-select-box');
+        const opponentButtonsContainer = document.getElementById('opponent-buttons-container');
+        const opponentBoxTitle = document.getElementById('opponent-box-title');
         
         const p1Box = document.getElementById('p1-box');
         const p2Box = document.getElementById('p2-box');
         const p1TimerText = document.getElementById('p1-timer');
         const p2TimerText = document.getElementById('p2-timer');
+        const p1TitleText = document.getElementById('p1-title');
+        const p2TitleText = document.getElementById('p2-title');
         const gameImg = document.getElementById('game-img');
         const statusDisplay = document.getElementById('status-display');
         const answerDisplay = document.getElementById('answer-display');
@@ -510,12 +596,25 @@
             timers = { 1: 20, 2: 20 };
             scores = { 1: 0, 2: 0 };
             currentPlayer = 1;
-            gameCategories.forEach(cat => cat.completed = false);
+            eliminatedGroups = { 1: false, 2: false, 3: false, 4: false, 5: false };
+            
+            // אתחול מקורי של הקטגוריות
+            gameCategories[0].groupId = 1;
+            gameCategories[1].groupId = 2;
+            gameCategories[2].groupId = 3;
+            gameCategories[3].groupId = 4;
+            gameCategories[4].groupId = 5;
+
+            gameCategories.forEach(cat => {
+                cat.completed = false;
+                cat.winnerName = null; 
+            });
             
             gameState = STATES.LANDING_SCREEN;
             landingImgElement.src = welcomeImage;
             welcomeLandingScreen.style.display = 'flex';
             gridContainer.style.display = 'none';
+            opponentSelectBox.style.display = 'none';
             arena.style.display = 'none';
             scoreboard.style.display = 'none';
 
@@ -527,7 +626,8 @@
             welcomeLandingScreen.style.display = 'none'; 
             arena.style.display = 'none';                
             scoreboard.style.display = 'none';           
-            gridContainer.style.display = 'grid';        
+            opponentSelectBox.style.display = 'none';
+            gridContainer.style.display = 'flex';        
 
             p1Box.classList.remove('active-p1');
             p2Box.classList.remove('active-p2');
@@ -535,44 +635,90 @@
             gridContainer.innerHTML = '';
             gameCategories.forEach(cat => {
                 const card = document.createElement('div');
-                card.className = `category-card ${cat.completed ? 'completed' : ''}`;
+                
+                let cardClass = 'category-card';
+                let tagContent = `משוייכת ל: ${groupNames[cat.groupId]}`;
+                
+                if (cat.completed) {
+                    if (cat.winnerName) {
+                        cardClass += ' completed';
+                        tagContent = `מנצח: ${cat.winnerName}`;
+                    } else {
+                        cardClass += ' completed';
+                        tagContent = '(הושלם)';
+                    }
+                }
+
+                card.className = cardClass;
                 card.innerHTML = `
                     <div>${cat.categoryName}</div>
-                    <span class="status-tag">${cat.completed ? '(הושלם)' : 'לחץ לבחירה'}</span>
+                    <span class="status-tag">${tagContent}</span>
                 `;
+                
+                // הריבוע לחיץ כל עוד הקטגוריה לא הושלמה (גם אם הבעלות עברה קבוצה!)
                 if (!cat.completed) {
-                    card.addEventListener('click', () => selectCategory(cat.id));
+                    card.addEventListener('click', () => startOpponentSelection(cat.id));
                 }
                 gridContainer.appendChild(card);
             });
 
+            // המשחק נגמר רק כשכל הקטגוריות בלוח הושלמו פנימית
             if (gameCategories.every(cat => cat.completed)) {
                 declareFinalWinner();
             }
         }
 
-        function selectCategory(id) {
-            selectedCategoryIdx = gameCategories.findIndex(cat => cat.id === id);
-            currentQuestionIndex = 0;
-            gameState = STATES.START_SCREEN;
-            shouldApplyPenalty = false;
+        function startOpponentSelection(catId) {
+            selectedCategoryIdx = gameCategories.findIndex(cat => cat.id === catId);
+            const cat = gameCategories[selectedCategoryIdx];
             
-            scores = { 1: 0, 2: 0 };
-            updateVisuals();
+            gameState = STATES.OPPONENT_SELECT;
+            gridContainer.style.display = 'none';
+            opponentSelectBox.style.display = 'flex';
+            
+            p1GroupNum = cat.groupId; 
+            p1TitleText.innerText = groupNames[p1GroupNum];
+            
+            opponentBoxTitle.innerText = `קטגוריית ${cat.categoryName} (${groupNames[p1GroupNum]})\nמי הקבוצה המאתגרת?`;
+            opponentButtonsContainer.innerHTML = '';
+            
+            for (let i = 1; i <= 5; i++) {
+                if (i !== p1GroupNum && !eliminatedGroups[i]) {
+                    const btn = document.createElement('button');
+                    btn.className = 'opponent-btn';
+                    btn.innerText = groupNames[i];
+                    btn.addEventListener('click', () => launchCategoryWithOpponent(i));
+                    opponentButtonsContainer.appendChild(btn);
+                }
+            }
+        }
 
-            gridContainer.style.display = 'none'; 
-            arena.style.display = 'flex';         
+        function launchCategoryWithOpponent(selectedOpponentId) {
+            p2GroupNum = selectedOpponentId; 
+            p2TitleText.innerText = groupNames[p2GroupNum];
+            
+            opponentSelectBox.style.display = 'none';
+            arena.style.display = 'flex';
             imageContainer.style.display = 'flex';
             textQuestionBox.style.display = 'none';
             countdownDisplay.style.display = 'none';
             gameImg.style.display = 'block';
             gameImg.src = welcomeImage;
-			
-
-
+            
+            // --- שורות התיקון החדשות לאיפוס מלא של הסיבוב ---
+            timers = { 1: 20, 2: 20 }; // מאפס את הטיימרים של שני המשתתפים ל-20 שניות
+            answerDisplay.style.visibility = 'hidden'; // מעלים ומסתיר את התשובה מהסיבוב הקודם
+            currentPlayer = 1; // מחזיר את התור תמיד למתמודד 1 בהתחלת קטגוריה
+            // --------------------------------------------------
+            
+            currentQuestionIndex = 0;
+            gameState = STATES.START_SCREEN;
+            shouldApplyPenalty = false;
+            scores = { 1: 0, 2: 0 };
+            
             const cat = gameCategories[selectedCategoryIdx];
-            statusDisplay.innerText = `הקטגוריה: ${cat.categoryName}`;
-            answerDisplay.style.visibility = 'hidden';
+            statusDisplay.innerText = `זירה: ${groupNames[p1GroupNum]} נגד ${groupNames[p2GroupNum]}\nלחצו רווח להתחלה!`;
+            updateVisuals();
         }
 
         function startCountdown() {
@@ -607,14 +753,30 @@
                 clearInterval(intervalId);
                 
                 let winner;
-                let reason = `תמו השאלות בשלב זה!\nציון השלב:\nמתמודד 1: ${scores[1]} תשובות | מתמודד 2: ${scores[2]} תשובות`;
+                let winningGroupNum, losingGroupNum;
+                let reason = `תמו השאלות בשלב זה!\nציון השלב:\n${groupNames[p1GroupNum]}: ${scores[1]} תשובות | ${groupNames[p2GroupNum]}: ${scores[2]} תשובות`;
                 
                 if (scores[1] > scores[2]) {
                     winner = 1;
+                    winningGroupNum = p1GroupNum;
+                    losingGroupNum = p2GroupNum;
                 } else if (scores[2] > scores[1]) {
                     winner = 2;
+                    winningGroupNum = p2GroupNum;
+                    losingGroupNum = p1GroupNum;
                 } else {
                     winner = "תיקו";
+                }
+                
+                if (winner !== "תיקו") {
+                    cat.winnerName = groupNames[winningGroupNum];
+                    eliminatedGroups[losingGroupNum] = true; 
+                    reason += `\n\n** ${groupNames[losingGroupNum]} הודחה מהטורניר! **`;
+                    // פונקציית הקסם: מעבירה את כל הקטגוריות הפנויות של המפסיד לטובת המנצח
+                    transferOwnership(losingGroupNum, winningGroupNum);
+                } else {
+                    cat.winnerName = "תיקו";
+                    reason += `\n\n(במצב של תיקו אף קבוצה לא מודחת והבעלויות לא משתנות)`;
                 }
                 
                 showStageSummary(winner, reason);
@@ -641,8 +803,8 @@
 
         function startTurn() {
             gameState = STATES.RUNNING;
-            scoreboard.style.display = 'block'; /* מציג את הלוח הצדדי */
-            statusDisplay.innerText = `  `;
+            scoreboard.style.display = 'block'; 
+            statusDisplay.innerText = `תור: ${currentPlayer === 1 ? groupNames[p1GroupNum] : groupNames[p2GroupNum]} - השעון רץ!`;
             
             p1Box.classList.toggle('active-p1', currentPlayer === 1);
             p2Box.classList.toggle('active-p2', currentPlayer === 2);
@@ -660,11 +822,30 @@
                     
                     const runningOutPlayer = currentPlayer;
                     const winner = (runningOutPlayer === 1) ? 2 : 1;
-                    const reason = `למתמודד ${runningOutPlayer} נגמר הזמן!`;
                     
+                    const winningGroupNum = (winner === 1) ? p1GroupNum : p2GroupNum;
+                    const losingGroupNum = (runningOutPlayer === 1) ? p1GroupNum : p2GroupNum;
+                    
+                    cat.winnerName = groupNames[winningGroupNum];
+                    eliminatedGroups[losingGroupNum] = true; 
+                    
+                    // העברת בעלות גם במקרה של הפסד זמן
+                    transferOwnership(losingGroupNum, winningGroupNum);
+                    
+                    const reason = `לשעון של ${groupNames[losingGroupNum]} נגמר הזמן!\n\n** ${groupNames[losingGroupNum]} הודחה מהטורניר! **`;
                     showStageSummary(winner, reason);
                 }
             }, 1000);
+        }
+
+        // פונקציית הקסם להעברת בעלות על קטגוריות שלא שוחקו
+        function transferOwnership(fromGroup, toGroup) {
+            gameCategories.forEach(cat => {
+                // אם הקטגוריה שייכת לקבוצה המפסידה ועוד לא שיחקו בה
+                if (cat.groupId === fromGroup && !cat.completed) {
+                    cat.groupId = toGroup; // הקבוצה המנצחת מקבלת בעלות!
+                }
+            });
         }
 
         function triggerPenaltyStop() {
@@ -673,7 +854,7 @@
             clearInterval(intervalId);
             shouldApplyPenalty = true; 
             answerDisplay.style.visibility = 'visible';
-            statusDisplay.innerText = `מתמודד ${currentPlayer} ביקש עבור.`;
+            statusDisplay.innerText = `${currentPlayer === 1 ? groupNames[p1GroupNum] : groupNames[p2GroupNum]} ביקש עבור.`;
             gameState = STATES.SHOWING_ANSWER;
         }
 
@@ -686,7 +867,7 @@
                 resetGame();
                 return;
             }
-            if (gameState === STATES.COUNTDOWN) return;
+            if (gameState === STATES.COUNTDOWN || gameState === STATES.OPPONENT_SELECT) return;
 
             if (gameState === STATES.LANDING_SCREEN) {
                 showSelectionGrid();
@@ -719,7 +900,17 @@
                     if (timers[currentPlayer] <= 0) {
                         cat.completed = true;
                         const winner = (currentPlayer === 1) ? 2 : 1;
-                        showStageSummary(winner, `למתמודד ${currentPlayer} נגמר הזמן בעקבות קנס!`);
+                        
+                        const winningGroupNum = (winner === 1) ? p1GroupNum : p2GroupNum;
+                        const losingGroupNum = (currentPlayer === 1) ? p1GroupNum : p2GroupNum;
+                        
+                        cat.winnerName = groupNames[winningGroupNum];
+                        eliminatedGroups[losingGroupNum] = true; 
+                        
+                        // העברת בעלות גם במקרה של הפסד זמן בגלל קנס
+                        transferOwnership(losingGroupNum, winningGroupNum);
+                        
+                        showStageSummary(winner, `לשעון של ${groupNames[losingGroupNum]} נגמר הזמן בעקבות קנס!\n\n** ${groupNames[losingGroupNum]} הודחה מהטורניר! **`);
                         return;
                     }
                 } else {
@@ -746,7 +937,8 @@
             if (winner === "תיקו") {
                 winnerText.innerText = `השלב הסתיים בתיקו!\n${reason}`;
             } else {
-                winnerText.innerText = `מתמודד ${winner} ניצח בשלב זה!\n\n${reason}`;
+                const winningGroupName = (winner === 1) ? groupNames[p1GroupNum] : groupNames[p2GroupNum];
+                winnerText.innerText = `${winningGroupName} ניצחה בשלב זה!\n\n${reason}`;
             }
             overlayBtn.innerText = "חזור ללוח הקטגוריות (רווח)";
             overlayBtn.setAttribute("onclick", "closeSummaryAndGoToGrid()");
@@ -762,15 +954,15 @@
             gameState = STATES.FINAL_SUMMARY; 
             clearInterval(intervalId);
             
-            let finalWinner;
-            if (timers[1] > timers[2]) finalWinner = 1;
-            else if (timers[2] > timers[1]) finalWinner = 2;
-            else finalWinner = "תיקו (זמן זהה)";
+            let aliveGroups = [];
+            for (let i = 1; i <= 5; i++) {
+                if (!eliminatedGroups[i]) aliveGroups.push(groupNames[i]);
+            }
 
-            if (finalWinner === "תיקו (זמן זהה)") {
-                winnerText.innerText = `המשחק נגמר בתיקו מוחלט!\nלשני המתמודדים נותר זמן זהה בשעון.`;
+            if (aliveGroups.length === 1) {
+                winnerText.innerText = `הטורניר הסתיים!\n\nהקבוצה האלופה המנצחת של כל הזירה היא:\n👑 ${aliveGroups[0]} 👑`;
             } else {
-                winnerText.innerText = `כל הקטגוריות הושלמו!\nהמנצח הגדול של המשחק הוא מתמודד ${finalWinner}!`;
+                winnerText.innerText = `הטורניר הסתיים!\n\nהקבוצות ששרדו והגיעו לקו הסיום:\n${aliveGroups.join(' | ')}`;
             }
             
             overlayBtn.innerText = "שחק שוב מהתחלה (רווח)";
